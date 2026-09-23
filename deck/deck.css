@@ -22,12 +22,14 @@ body { font-size: 26px; line-height: 1.45; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
 .pill-note { display: inline-flex; gap: 10px; align-items: center; font-size: 22px; padding: 10px 18px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); color: var(--ink-2); }
-.insight { font-family: var(--display); font-weight: 700; font-size: 50px; line-height: 1.15; letter-spacing: -0.02em; }
+.insight { font-family: var(--display); font-weight: 700; font-size: 46px; line-height: 1.15; letter-spacing: -0.02em; }
 .insight em { font-style: normal; color: var(--amber); }
 /* титул */
 .title .hero-img { position: absolute; right: 40px; top: 60px; height: 960px; }
 .title h1 { font-family: var(--display); font-weight: 800; font-size: 94px; line-height: 1; letter-spacing: -0.035em; margin: 24px 0 26px; max-width: 1080px; }
-.title h1 em { font-style: normal; background: linear-gradient(92deg, var(--amber) 10%, var(--amber-2) 60%, var(--focus) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.title h1 em { font-style: normal; color: var(--amber); }
+.title .tagline { font-family: var(--display); font-weight: 700; font-size: 58px; line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 28px; max-width: 1020px; }
+.title .tagline em { font-style: normal; color: var(--amber); }
 .title .lead { max-width: 980px; font-size: 29px; }
 .title .meta { margin-top: auto; display: flex; gap: 18px; align-items: center; }
 .qr { width: 150px; height: 150px; padding: 12px; background: #fff; border-radius: 18px; box-sizing: border-box; }
@@ -36,8 +38,8 @@ body { font-size: 26px; line-height: 1.45; }
 /* столпы */
 .pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; flex: 1; }
 .pillar { border-radius: 30px; background: var(--glass); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
-.pillar .img { height: 420px; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 22%, transparent), transparent 75%); display: grid; place-items: center; overflow: hidden; }
-.pillar .img img { max-height: 440px; max-width: 110%; object-fit: contain; }
+.pillar .img { height: 350px; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 22%, transparent), transparent 75%); display: grid; place-items: center; overflow: hidden; }
+.pillar .img img { max-height: 370px; max-width: 110%; object-fit: contain; }
 .pillar .tx { padding: 24px 26px 28px; display: flex; flex-direction: column; gap: 10px; }
 .pillar .tx .n { font-family: var(--mono); font-size: 17px; color: var(--c); letter-spacing: .1em; text-transform: uppercase; }
 .pillar .tx h3 { font-size: 30px; line-height: 1.15; margin: 0; }
@@ -50,7 +52,7 @@ body { font-size: 26px; line-height: 1.45; }
 .frame .t i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
 .frame .ph { display: flex; justify-content: center; }
 .frame .ph .phone-wrap { width: auto; height: auto; }
-.frame .ph .phone { --w: 268px; }
+.frame .ph .phone { --w: 252px; }
 .frame h4 { margin: 0; font-size: 27px; line-height: 1.2; }
 .frame > p { margin: 0; font-size: 20px; color: var(--ink-2); line-height: 1.38; }
 /* таблицы */
@@ -61,7 +63,7 @@ body { font-size: 26px; line-height: 1.45; }
 .rtable td .muted { font-size: 18px; }
 .rtable .badge { font-size: 16px; }
 .specs-d { width: 100%; border-collapse: collapse; font-size: 23px; }
-.specs-d th, .specs-d td { padding: 13px 14px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.specs-d th, .specs-d td { padding: 11px 14px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
 .specs-d th { width: 22%; font-family: var(--mono); font-size: 16px; color: var(--muted); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding-top: 18px; }
 .specs-d tr.hl th { color: var(--amber); }
 .specs-d td span { display: block; font-size: 17px; color: var(--muted); }

@@ -18,16 +18,17 @@ const heroEl = $('#hero3d'), devEl = $('#dev3d');
 const ORDER = ['play', 'life', 'focus'];
 const HERO_POSTERS = { play: 'assets/img/flow-hero.png', life: 'assets/img/flow-back-life.png', focus: 'assets/img/flow-back-focus.png' };
 let hero3d = null, dev3d = null, heroMode = 'play', auto = !reducedMotion(), resume = 0;
+let heroLive = false; // режимы в герое крутятся только когда на экране то, что можно перекрасить (3D или готовые постеры)
 function setHeroMode(m, byUser = false) {
   heroMode = m;
   heroEl?.style.setProperty('--mode', `var(--${m})`);
   $$('#heroModes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
   if (hero3d) hero3d.setMode(m);
-  else { const img = heroEl?.querySelector('.poster'); if (img) img.src = HERO_POSTERS[m]; } // без WebGL меняем постер
+  else if (!webgl) { const img = heroEl?.querySelector('.poster'); if (img) img.src = HERO_POSTERS[m]; } // без WebGL меняем постер; с WebGL модель сама возьмёт режим при загрузке
   if (byUser) { auto = false; clearTimeout(resume); resume = setTimeout(() => { auto = !reducedMotion(); }, 15000); }
 }
 $$('#heroModes button').forEach(b => b.addEventListener('click', () => setHeroMode(b.dataset.mode, true)));
-setInterval(() => { if (auto && !document.hidden && scrollY < innerHeight) setHeroMode(ORDER[(ORDER.indexOf(heroMode) + 1) % 3]); }, 3600);
+setInterval(() => { if (heroLive && auto && !document.hidden && scrollY < innerHeight) setHeroMode(ORDER[(ORDER.indexOf(heroMode) + 1) % 3]); }, 4200);
 
 // ---------- решение: шаги двигают модель; без WebGL остаются постеры
 const POSTERS = ['assets/img/flow-side.png', 'assets/img/flow-front.png', 'assets/img/flow-xray.png', 'assets/img/flow-game.png'];
@@ -42,6 +43,10 @@ if (devSection) scrolly(devSection, (i) => {
 
 window.__flow = { hero: () => hero3d, dev: () => dev3d }; // доступ для автопроверки сцен
 const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
+if (!webgl) { // без WebGL заранее грузим постеры остальных режимов, чтобы смена не мигала пустым кадром
+  Promise.all(Object.values(HERO_POSTERS).map(src => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = src; })))
+    .then(() => { heroLive = true; });
+}
 if (webgl && heroEl) {
   let mod = null;
   const load = () => (mod ??= import('./phone3d.js'));
@@ -50,6 +55,7 @@ if (webgl && heroEl) {
     try {
       const m = await load();
       hero3d = await m.mount(heroEl, { variant: 'hero', mode: heroMode });
+      heroLive = true;
     } catch (e) { console.warn('3D недоступно, остаётся постер', e); }
   });
   let devMounting = null;

@@ -92,7 +92,7 @@ function drawScreen(g, st) {
   }
   if (st.view === 'digest') {
     chip(170, 'Фокус · перерыв');
-    card(250, 330, 'Сводка за 2 ч 20 мин', [['Пришло', '96'], ['Пропущено сразу', '2'], ['В сводке', '94 → 3 строки']]);
+    card(250, 330, 'Сводка за 2 ч 20 мин', [['Пришло', '96'], ['Показано сразу', '2'], ['В сводке', '94 → 3 строки']]);
     const items = [['ПИ', '#9085e9', 'Группа', 'Пару в пятницу перенесли на 10:00'], ['W', '#7fdcb9', 'Работа', 'Макет согласован'], ['🎮', '#f0b419', 'Друзья', 'Собираются в 22:30']];
     items.forEach(([ic, c, who, txt], i) => {
       const y = 630 + i * 150;
@@ -108,8 +108,8 @@ function drawScreen(g, st) {
   // экран блокировки
   g.fillStyle = '#f4f2ee'; g.font = '600 170px "Unbounded", sans-serif'; g.fillText(st.clock || '18:41', w / 2, 330);
   g.font = '400 30px "Inter", sans-serif'; g.fillStyle = 'rgba(244,242,238,.7)'; g.fillText('вторник, 13 октября', w / 2, 392);
-  chip(490, st.mode === 'focus' ? 'Фокус · до 22:00' : st.mode === 'play' ? 'Игра · на полную' : 'Жизнь · как обычно');
-  if (st.mode === 'focus') card(580, 330, 'Шумодав держит 146', [['Пропускаю', 'Лёша · научрук · мама'], ['На паузе', 'ленты, игры'], ['Друзьям', '«В фокусе до 22:00»']]);
+  chip(490, st.mode === 'focus' ? 'Фокус · до 22:00' : st.mode === 'play' ? 'Игра · максимум' : 'Жизнь · как обычно');
+  if (st.mode === 'focus') card(580, 330, 'Шумодав отложил 146', [['Сразу покажу', 'Лёша · научрук · мама'], ['На паузе', 'соцсети, игры'], ['Друзьям', '«В фокусе до 22:00»']]);
   else if (st.mode === 'play') card(580, 330, 'Режим игры', [['Кадры', '144 к/с · Q2'], ['Питание', 'в обход батареи'], ['Звонки', 'только близкие']]);
   else card(580, 330, `Режим «${name}»`, [['Уведомления', 'группами'], ['Шумодав', 'сортирует'], ['НЗ-заряд', '10% на дорогу']]);
 }
@@ -226,7 +226,7 @@ export async function mount(container, opts = {}) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 720; const g = c.getContext('2d');
     g.textAlign = 'center'; g.fillStyle = 'rgba(244,242,238,.92)'; g.font = '700 70px "Inter", sans-serif'; g.fillText('8 000 мА·ч', 256, 330);
     g.fillStyle = 'rgba(244,242,238,.6)'; g.font = '500 30px "Inter", sans-serif'; g.fillText('кремний-углеродный анод', 256, 385);
-    g.fillStyle = '#34d3c1'; g.font = '700 31px "Inter", sans-serif'; g.fillText('НЗ 10% — на дорогу домой', 256, 628);
+    g.fillStyle = '#34d3c1'; g.font = '700 31px "Inter", sans-serif'; g.fillText('НЗ 10%: на дорогу домой', 256, 628);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
   const label = new THREE.Mesh(new THREE.PlaneGeometry(batW, batW * 720 / 512), new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, depthWrite: false, toneMapped: false }));
@@ -254,13 +254,16 @@ export async function mount(container, opts = {}) {
   const onPointer = (e) => { const r = container.getBoundingClientRect(); pointer.x = ((e.clientX - r.left) / r.width - .5) * 2; pointer.y = ((e.clientY - r.top) / r.height - .5) * 2; };
   if (opts.variant === 'hero' && !opts.still) container.addEventListener('pointermove', onPointer);
 
-  const resize = () => {
+  let sizeW = 0, sizeH = 0;
+  const resize = () => { // вызывается из кадра, поэтому новый размер и отрисовка попадают в один кадр без пустого буфера
     const w = container.clientWidth || 600, h = container.clientHeight || 600;
+    if (w === sizeW && h === sizeH) return;
+    sizeW = w; sizeH = h;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     cur.fitK = Math.max(1, 0.78 / Math.min(1, w / h)); // узкий кадр — отъезжаем дальше
   };
   resize();
-  const ro = new ResizeObserver(resize); ro.observe(container);
+  const ro = new ResizeObserver(() => { if (!running) { resize(); renderer.render(scene, camera); } }); ro.observe(container);
 
   const setXray = (v) => {
     const on = v > .002;
@@ -277,7 +280,7 @@ export async function mount(container, opts = {}) {
     const k = opts.still ? 1 : 1 - Math.exp(-dt * 4.5);
     for (const p of ['ry', 'rx', 'rz', 'x', 'y', 'cam', 'xray']) cur[p] += (tgt[p] - cur[p]) * k;
     cur.knob += (KNOB[st.mode] - cur.knob) * (opts.still ? 1 : 1 - Math.exp(-dt * 14));
-    cur.color.lerp(tgtColor, opts.still ? 1 : 1 - Math.exp(-dt * 6));
+    cur.color.lerp(tgtColor, opts.still ? 1 : 1 - Math.exp(-dt * 3.5));
     pSmooth.x += (pointer.x - pSmooth.x) * k; pSmooth.y += (pointer.y - pSmooth.y) * k;
     const idle = opts.still ? 0 : now / 1000;
     const sway = st.pose === 'hero' ? Math.sin(idle * .5) * .12 : Math.sin(idle * .6) * .04;
@@ -288,8 +291,9 @@ export async function mount(container, opts = {}) {
     ringMat.color.copy(cur.color); glowMat.color.copy(cur.color);
     setXray(cur.xray);
     if (st.cycle && st.pose === 'side' && !opts.still) {
-      cycleT += dt; if (cycleT > 1.5) { cycleT = 0; const n = cyc[(cyc.indexOf(st.mode) + 1) % 3]; api.setMode(n); }
+      cycleT += dt; if (cycleT > 2.6) { cycleT = 0; const n = cyc[(cyc.indexOf(st.mode) + 1) % 3]; api.setMode(n); }
     }
+    resize();
     renderer.render(scene, camera);
     if (running) raf = requestAnimationFrame(frame);
   }

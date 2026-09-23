@@ -36,8 +36,9 @@ def stamp(path):
     """Метаданные PDF: название и тема вместо служебных полей браузера."""
     from pypdf import PdfReader, PdfWriter
     r = PdfReader(str(path)); w = PdfWriter(clone_from=r)
+    producer = (r.metadata or {}).get('/Producer', 'Skia/PDF')
     w.add_metadata({'/Title': 'iQOO Flow — концепт смартфона для молодого поколения', '/Subject': 'Смарт Кон iQOO 2026, второй этап',
-                    '/Keywords': 'iQOO, смартфон, концепт, Смарт Кон', '/Creator': 'iQOO Flow', '/Producer': 'iQOO Flow'})
+                    '/Keywords': 'iQOO, смартфон, концепт, Смарт Кон', '/Creator': 'Google Chrome', '/Producer': producer})
     w.compress_identical_objects()
     with open(path, 'wb') as f:
         w.write(f)

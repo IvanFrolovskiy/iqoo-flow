@@ -14,7 +14,7 @@ export function initScenario() {
     shown = i;
     const s = SCENES[i];
     phone.setMode(s.mode);
-    phone.show(s.html(), { instant: first });
+    phone.show(s.html(), { instant: first, mode: s.mode });
   };
   scrolly(section, go);
 }

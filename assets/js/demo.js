@@ -1,4 +1,5 @@
-// Интерактив «Переключи тумблер»: поток входящих и правила режимов Шумодава в реальном времени.
+// Интерактив «Попробуй тумблер»: поток сообщений и правила режимов Шумодава.
+// Экран режима рисуется один раз, дальше меняются только счётчики, время и новые карточки.
 import { $, $$, onVisible, reducedMotion } from './core.js';
 import { createPhone, sb, modebar, ntf, MODES } from './phone.js';
 
@@ -21,50 +22,59 @@ const POOL = [
 const TOTAL_W = POOL.reduce((a, p) => a + p.w, 0);
 const pick = () => { let r = Math.random() * TOTAL_W; for (const p of POOL) { if ((r -= p.w) <= 0) return p; } return POOL[0]; };
 
-// Правила режимов: show — как обычно, pass — Шумодав пропустил в режиме, quiet — тихий баннер в игре, hold — в сводку.
+// Правила режимов: show — как обычно, pass — Шумодав показал сразу, quiet — тихий баннер в игре, hold — в сводку.
 function route(m, mode) {
   if (mode === 'life') return 'show';
   if (mode === 'focus') return m.imp ? 'pass' : 'hold';
   if (m.kind === 'close' || m.kind === 'bank') return 'pass';
   return m.imp ? 'quiet' : 'hold';
 }
-const ST = { show: ['показано', 'show'], pass: ['пропущено Шумодавом', 'pass'], quiet: ['тихий баннер', 'pass'], hold: ['в сводку', 'hold'] };
+const ST = { show: ['показано', 'show'], pass: ['показано сразу', 'pass'], quiet: ['тихий баннер', 'pass'], hold: ['в сводку', 'hold'] };
 
 export function initDemo() {
   const host = $('#demo-phone');
   if (!host) return;
-  const log = $('#demo-log'), sw = $('#switcher');
+  const log = $('#demo-log'), sw = $('#switcher'), box = host.closest('.demo-phone');
   const s = { mode: 'life', t: 19 * 60, n: 0, shown: 0, held: [], lost: 0, recent: [], last: null, running: true, visible: false, digest: false };
   const phone = createPhone(host, { labels: false, interactive: true, onToggle: (m) => setMode(m) });
   const clock = () => `${String(Math.floor(s.t / 60) % 24).padStart(2, '0')}:${String(s.t % 60).padStart(2, '0')}`;
   const bat = () => Math.max(12, 64 - Math.floor(s.n / 3));
+  const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; };
 
-  const screen = () => {
-    const t = clock();
+  // каркас экрана для режима; в слотах потом меняется только содержимое
+  const skeleton = () => {
+    const t = clock(), b = bat();
     if (s.mode === 'life') {
-      return `<div class="scr">${sb(t, bat())}<div class="clock">${t}</div>${modebar('life', 'всё как обычно')}
-        <div class="stack" style="margin-top:5%">${s.recent.slice(0, 4).map(m => ntf({ ...m, tm: m.tm })).join('') || '<div class="more">пока тихо</div>'}
-        ${s.recent.length > 4 ? `<div class="more">и ещё ${s.recent.length - 4}</div>` : ''}</div></div>`;
+      return `<div class="scr">${sb(t, b)}<div class="clock slot-clock">${t}</div>${modebar('life', 'всё как обычно')}
+        <div class="stack slot-list" style="margin-top:5%">${s.recent.slice(0, 4).map(m => ntf(m)).join('')}</div>
+        <div class="more slot-more" style="text-align:center;font-size:.72em;color:var(--muted);margin-top:.4em"></div></div>`;
     }
     if (s.mode === 'focus') {
-      const hot = s.last && s.last.route === 'pass' ? ntf({ ...s.last, cls: 'hot', tags: '<div class="tags"><span class="m">важное</span><span>пропущено Шумодавом</span></div>' }) : '';
-      return `<div class="scr">${sb(t, bat())}${modebar('focus', 'до 22:00')}
-        <div class="panel" style="margin-top:5%;text-align:center"><div style="font-size:.85em;color:var(--ink-2)">Шумодав держит</div>
-          <div style="font-family:var(--display);font-size:2.6em;font-weight:700;letter-spacing:-.03em">${s.held.length}</div>
+      return `<div class="scr">${sb(t, b)}${modebar('focus', 'до 22:00')}
+        <div class="panel" style="margin-top:5%;text-align:center"><div style="font-size:.85em;color:var(--ink-2)">Шумодав отложил</div>
+          <div class="slot-held" style="font-family:var(--display);font-size:2.6em;font-weight:700;letter-spacing:-.03em">${s.held.length}</div>
           <div style="font-size:.8em;color:var(--muted)">сообщений до перерыва</div></div>
-        ${hot || '<div class="more" style="text-align:center;font-size:.72em;color:var(--muted)">важное появится здесь сразу</div>'}
-        <div class="panel"><div class="row"><span>На паузе</span><b>ленты, игры, магазины</b></div><div class="row"><span>Друзьям</span><b>«В фокусе до 22:00»</b></div></div></div>`;
+        <div class="slot-hot"><div class="more" style="text-align:center;font-size:.72em;color:var(--muted)">важное появится здесь сразу</div></div>
+        <div class="panel"><div class="row"><span>На паузе</span><b>соцсети, игры, магазины</b></div><div class="row"><span>Друзьям</span><b>«В фокусе до 22:00»</b></div></div></div>`;
     }
-    const ban = s.last && (s.last.route === 'pass' || s.last.route === 'quiet') ? ntf({ ...s.last, cls: s.last.route === 'pass' ? 'hot' : 'dim' }) : '';
-    return `<div class="hud">${sb(t, bat())}<div class="modebar" style="margin-top:2%"><i></i>Игра · на полную</div>
+    return `<div class="hud">${sb(t, b)}<div class="modebar" style="margin-top:2%"><i></i>Игра</div>
       <div class="fps"><span>144 к/с</span><span>Q2 1.5K</span><span>звонят близкие</span></div>
-      ${ban}<div class="arena">МАТЧ ИДЁТ</div>
-      <div class="panel"><div class="row"><span>В сводке</span><b>${s.held.length}</b></div><div class="row"><span>Важное</span><b>тихим баннером</b></div></div></div>`;
+      <div class="slot-banner"></div><div class="arena">МАТЧ ИДЁТ</div>
+      <div class="panel"><div class="row"><span>В сводке</span><b class="slot-held">${s.held.length}</b></div><div class="row"><span>Важное</span><b>тихим баннером</b></div></div></div>`;
   };
-  const render = (fade = false) => { if (s.digest) return; fade ? phone.show(screen()) : phone.update(screen()); };
+  const q = (sel) => phone.layer?.querySelector(sel);
+  const drawMode = (instant = false) => phone.show(skeleton(), { mode: s.mode, instant });
 
+  const refreshBar = () => {
+    const t = q('.sb-t'), b = q('.sb-b'), bi = q('.sb .bat i'), c = q('.slot-clock');
+    if (t) t.textContent = clock();
+    if (b) b.textContent = bat();
+    if (bi) bi.style.setProperty('--b', bat());
+    if (c) c.textContent = clock();
+  };
   const stats = () => {
     $('#st-in').textContent = s.n; $('#st-show').textContent = s.shown; $('#st-hold').textContent = s.held.length; $('#st-miss').textContent = s.lost;
+    const h = q('.slot-held'); if (h) h.textContent = s.held.length;
   };
   const addLog = (html) => {
     const row = document.createElement('div'); row.className = 'it'; row.innerHTML = html;
@@ -72,14 +82,31 @@ export function initDemo() {
     while (log.children.length > 9) log.lastChild.remove();
   };
 
+  // новая карточка на экране: вставляется сверху с короткой анимацией, остальное не трогаем
+  function place(item) {
+    if (s.digest) return;
+    if (s.mode === 'life') {
+      const list = q('.slot-list'); if (!list) return;
+      list.prepend(el(ntf({ ...item, cls: 'new' })));
+      while (list.children.length > 4) list.lastElementChild.remove();
+      const more = q('.slot-more'); if (more) more.textContent = s.recent.length > 4 ? `и ещё ${s.recent.length - 4}` : '';
+    } else if (s.mode === 'focus' && item.route === 'pass') {
+      const slot = q('.slot-hot'); if (!slot) return;
+      slot.replaceChildren(el(ntf({ ...item, cls: 'hot new', tags: '<div class="tags"><span class="m">важное</span><span>показано сразу</span></div>' })));
+    } else if (s.mode === 'play' && (item.route === 'pass' || item.route === 'quiet')) {
+      const slot = q('.slot-banner'); if (!slot) return;
+      slot.replaceChildren(el(ntf({ ...item, cls: (item.route === 'pass' ? 'hot' : 'dim') + ' new' })));
+    }
+  }
+
   function setMode(m) {
     if (m === s.mode) return;
     s.mode = m; s.last = null; s.digest = false;
     phone.setMode(m);
-    host.closest('.demo-phone').style.setProperty('--mode', MODES[m].color);
+    box.style.setProperty('--mode', MODES[m].color);
     $$('button', sw).forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === m)));
     addLog(`<span class="tm">${clock()}</span><span class="who"><b>Тумблер</b> <span>→ ${MODES[m].icon} ${MODES[m].name}</span></span><span class="st pass">щёлк</span>`);
-    render(true);
+    drawMode();
   }
 
   function tick() {
@@ -88,27 +115,26 @@ export function initDemo() {
     s.n++;
     const r = route(m, s.mode);
     const item = { ...m, tm: clock(), route: r };
-    if (r === 'hold') { s.held.push(item); if (m.imp) s.lost++; } else s.shown++;
-    if (r !== 'hold') { s.recent.unshift(item); s.recent = s.recent.slice(0, 8); }
-    s.last = r === 'hold' ? s.last : item;
+    if (r === 'hold') { s.held.push(item); if (m.imp) s.lost++; } else { s.shown++; s.recent.unshift(item); s.recent = s.recent.slice(0, 8); s.last = item; }
     const [txt, cls] = ST[r];
     addLog(`<span class="tm">${item.tm}</span><span class="who"><b>${m.who}</b> <span>· ${m.text}</span></span><span class="st ${cls}">${txt}</span>`);
-    stats(); render();
+    refreshBar(); stats();
+    if (r !== 'hold') place(item);
   }
 
   function showDigest() {
     const groups = {};
     s.held.forEach(m => { groups[m.who] = (groups[m.who] || 0) + 1; });
     const rows = Object.entries(groups).sort((a, b) => b[1] - a[1]).slice(0, 6)
-      .map(([w, n]) => `<div class="row"><span>${w}</span><b>${n}</b></div>`).join('') || '<p>Сводка пуста — всё уже показано.</p>';
+      .map(([w, n]) => `<div class="row"><span>${w}</span><b>${n}</b></div>`).join('') || '<p>Отложенных сообщений нет.</p>';
     const imp = s.held.filter(m => m.imp).length;
     s.digest = true;
     phone.show(`<div class="scr">${sb(clock(), bat())}${modebar(s.mode, 'сводка')}
-      <div class="panel" style="margin-top:5%"><h5><i></i>Сводка: ${s.held.length} сообщений</h5>${rows}</div>
-      <div class="panel"><p>${imp ? `Важных: ${imp}` : 'Срочного нет: всё важное Шумодав уже показал.'}</p></div></div>`);
-    addLog(`<span class="tm">${clock()}</span><span class="who"><b>Сводка</b> <span>· ${s.held.length} сообщений за 20 секунд</span></span><span class="st show">прочитано</span>`);
+      <div class="panel" style="margin-top:5%"><h5><i></i>Отложено: ${s.held.length}</h5>${rows}</div>
+      <div class="panel"><p>${imp ? `Среди них важных: ${imp}` : 'Срочного среди них нет, важное уже было показано.'}</p></div></div>`, { mode: s.mode });
+    addLog(`<span class="tm">${clock()}</span><span class="who"><b>Сводка</b> <span>· ${s.held.length} сообщений</span></span><span class="st show">прочитано</span>`);
     s.held = []; stats();
-    setTimeout(() => { s.digest = false; render(true); }, 4200);
+    setTimeout(() => { s.digest = false; drawMode(); }, 4200);
   }
 
   let timer = 0;
@@ -128,18 +154,18 @@ export function initDemo() {
   $('#demo-pause').addEventListener('click', (e) => { s.running = !s.running; e.currentTarget.textContent = s.running ? 'Пауза' : 'Продолжить'; });
   $('#demo-reset').addEventListener('click', () => {
     Object.assign(s, { t: 19 * 60, n: 0, shown: 0, held: [], lost: 0, recent: [], last: null, digest: false });
-    log.innerHTML = ''; stats(); render(true);
+    log.innerHTML = ''; stats(); drawMode();
   });
   $('#demo-digest').addEventListener('click', showDigest);
-  let seeded = false; // при первом показе сразу три сообщения, чтобы демо не выглядело пустым
+  let seeded = false; // при первом показе сразу три сообщения, чтобы экран не был пустым
   onVisible(host, (v) => {
     s.visible = v;
     if (v && !seeded) { seeded = true; [0, 350, 700].forEach(d => setTimeout(() => { if (s.running) tick(); }, d)); }
   }, '0px');
 
-  host.closest('.demo-phone').style.setProperty('--mode', MODES.life.color);
+  box.style.setProperty('--mode', MODES.life.color);
   phone.setMode('life');
-  phone.show(screen(), { instant: true });
+  drawMode(true);
   stats();
   loop();
 }

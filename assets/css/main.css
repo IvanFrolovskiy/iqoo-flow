@@ -7,7 +7,7 @@
   --ink: #f4f2ee; --ink-2: rgba(244,242,238,.76); --muted: rgba(244,242,238,.54); --faint: rgba(244,242,238,.36);
   --amber: #f0b419; --amber-2: #ffd465; --amber-ink: #1a1203;
   --focus: #34d3c1; --life: #ede7da; --play: #f0b419;
-  /* метки графиков: слоты проверены валидатором на поверхности #101012 (ΔE CVD ≥ 8,4, контраст ≥ 3:1) */
+  /* цвета графиков подобраны так, чтобы различаться при дальтонизме (ΔE ≥ 8,4) и держать контраст ≥ 3:1 на фоне #101012 */
   --v1: #c98500; --v2: #199e70; --v3: #9085e9; --v-accent: #f0b419; --v-mute: #66666e; --v-track: #232327;
   --ai-1: #1a8f6a; --ai-2: #2fb98c; --ai-3: #7fdcb9;
   --font: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -19,6 +19,8 @@
   --mode: var(--life);
   color-scheme: dark;
 }
+/* цвет режима как типизированное свойство: градиенты свечения меняют цвет плавно, а не скачком */
+@property --mode { syntax: '<color>'; inherits: true; initial-value: #ede7da; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 12px); -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.58;
@@ -107,8 +109,8 @@ main, footer { position: relative; z-index: 1; }
 
 /* ---------- герой */
 .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: calc(var(--nav-h) + 28px) 0 40px; }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 32px; align-items: center; width: 100%; }
-.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.3rem, 5.2vw, 4.6rem); line-height: 1.02; letter-spacing: -0.03em; margin: 18px 0 22px; text-wrap: balance; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(0, .82fr); gap: 32px; align-items: center; width: 100%; }
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.2rem, 4.6vw, 4.1rem); line-height: 1.04; letter-spacing: -0.03em; margin: 18px 0 22px; text-wrap: balance; }
 .hero h1 em { font-style: normal; background: linear-gradient(92deg, var(--amber) 10%, var(--amber-2) 60%, var(--focus) 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero .lead { margin-bottom: 26px; }
 .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -229,8 +231,8 @@ main, footer { position: relative; z-index: 1; }
 .phone .toggle-labels span.on::after { content: " ←"; color: var(--mode); }
 @media (max-width: 900px) { .phone .toggle-labels { display: none; } }
 .phone[data-mode] { box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,.14), inset 0 0 0 3px #0a0a0c, 0 0 0 1px color-mix(in srgb, var(--mode) 20%, transparent); }
-.phone .layer { position: absolute; inset: 0; transition: opacity 480ms var(--ease), transform 480ms var(--ease); }
-.phone .layer.out { opacity: 0; transform: scale(.985); }
+.phone .layer { position: absolute; inset: 0; opacity: 1; transform: none; transition: opacity 200ms cubic-bezier(.05,.7,.1,1), transform 240ms cubic-bezier(.05,.7,.1,1); }
+.phone .layer.enter { opacity: 0; transform: translateY(2%); }
 /* экраны */
 .scr { position: absolute; inset: 0; padding: 12% 6% 6%; display: flex; flex-direction: column; gap: 3.2%; color: var(--ink); background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--mode) 22%, #0c0c0f), #060607 70%); }
 .sb { position: absolute; top: 2.2%; left: 7%; right: 7%; display: flex; justify-content: space-between; align-items: center; font-size: .72em; font-weight: 600; color: var(--ink-2); font-family: var(--mono); }
@@ -242,14 +244,15 @@ main, footer { position: relative; z-index: 1; }
 .date { text-align: center; font-size: .82em; color: var(--ink-2); margin-top: -1%; }
 .modebar { display: flex; align-items: center; justify-content: center; gap: .45em; font-size: .8em; font-weight: 600; margin: 1% auto 0; padding: .35em .9em; border-radius: 999px; background: color-mix(in srgb, var(--mode) 18%, transparent); border: 1px solid color-mix(in srgb, var(--mode) 50%, transparent); width: max-content; }
 .modebar i { width: .55em; height: .55em; border-radius: 50%; background: var(--mode); box-shadow: 0 0 .6em var(--mode); }
-.ntf { display: flex; gap: .6em; align-items: flex-start; padding: .62em .7em; border-radius: .95em; background: rgba(255,255,255,.075); border: 1px solid rgba(255,255,255,.07); font-size: .78em; line-height: 1.3;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ntf { display: flex; gap: .6em; align-items: flex-start; padding: .62em .7em; border-radius: .95em; background: #1b1b1f; border: 1px solid rgba(255,255,255,.07); font-size: .78em; line-height: 1.3; }
+.ntf.new { animation: ntf-in 420ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes ntf-in { from { opacity: 0; transform: translateY(-.8em); } to { opacity: 1; transform: none; } }
 .ntf .ic { flex: 0 0 auto; width: 2.1em; height: 2.1em; border-radius: .6em; display: grid; place-items: center; font-size: .95em; font-weight: 700; color: #111; background: var(--ic, #999); }
 .ntf .tx { min-width: 0; flex: 1; }
 .ntf .tx b { display: block; font-size: .95em; }
 .ntf .tx span { color: var(--ink-2); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ntf .tm { font-size: .82em; color: var(--muted); font-family: var(--mono); }
-.ntf.hot { background: color-mix(in srgb, var(--mode) 16%, rgba(255,255,255,.06)); border-color: color-mix(in srgb, var(--mode) 55%, transparent); box-shadow: 0 0 1.4em color-mix(in srgb, var(--mode) 25%, transparent); }
+.ntf.hot { background: color-mix(in srgb, var(--mode) 16%, #18181c); border-color: color-mix(in srgb, var(--mode) 55%, transparent); box-shadow: 0 0 1.4em color-mix(in srgb, var(--mode) 25%, transparent); }
 .ntf.dim { opacity: .55; }
 .stack { display: flex; flex-direction: column; gap: .45em; }
 .stack .more { text-align: center; font-size: .72em; color: var(--muted); }
@@ -301,7 +304,7 @@ main, footer { position: relative; z-index: 1; }
 /* итог сценария */
 .outcome { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
 .outcome .kpi .v { color: var(--ink); }
-@media (max-width: 900px) { .outcome { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px) { .outcome { grid-template-columns: 1fr 1fr; } .outcome .kpi .v { font-size: 1.45rem; } }
 
 /* интерактив */
 .demo { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 28px; align-items: stretch; }
@@ -534,5 +537,11 @@ footer .links { display: flex; gap: 10px; flex-wrap: wrap; }
 /* печать и PDF: размытие фона Chrome при печати теряет, поэтому стекло делаем плотным */
 @media print {
   *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-  .ntf { background: #1d1d21; }
 }
+
+/* плавная смена цвета режима: свечение за телефоном, рамка, интерактив */
+.phone-wrap, .phone3d, .demo-phone { transition: --mode 650ms cubic-bezier(.3,.7,.3,1); }
+.phone3d .glow, .phone-wrap .aura { transition: none; }
+/* постер уходит только после того, как 3D-холст полностью проявился */
+.phone3d canvas { transition: opacity 600ms var(--ease); }
+.phone3d.ready .poster { transition: opacity 400ms var(--ease) 600ms; }

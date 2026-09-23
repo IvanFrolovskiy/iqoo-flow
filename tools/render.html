@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>render</title>
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<style>html,body{margin:0;background:transparent}#v{position:relative;width:var(--w,1000px);height:var(--h,1000px)}
+#v canvas{position:absolute;inset:0;width:100%;height:100%}.probe{font:600 20px Unbounded;position:absolute;opacity:0}.probe2{font:400 20px Inter;position:absolute;opacity:0}.probe3{font:600 20px "JetBrains Mono";position:absolute;opacity:0}</style></head>
+<body><span class="probe">Аб</span><span class="probe2">Аб</span><span class="probe3">Аб</span><div id="v"></div>
+<script type="module">
+// Рендер кадра модели для постеров и презентации: ?pose=hero|side|front|xray|game|back&mode=play|life|focus&w=1000&h=1000
+const q = new URLSearchParams(location.search);
+const v = document.getElementById('v');
+v.style.setProperty('--w', (q.get('w') || 1000) + 'px'); v.style.setProperty('--h', (q.get('h') || 1000) + 'px');
+const { mount } = await import('../assets/js/phone3d.js');
+await document.fonts.ready;
+const api = await mount(v, { still: true, pose: q.get('pose') || 'hero', mode: q.get('mode') || 'play', variant: q.get('pose') === 'hero' ? 'hero' : 'device' });
+api.setPose(q.get('pose') || 'hero'); api.setMode(q.get('mode') || 'play');
+api.renderOnce();
+window.__ready = true;
+</script></body></html>

@@ -4,6 +4,7 @@
 
 **Сайт проекта:** https://ivanfrolovskiy.github.io/iqoo-flow/
 **Презентация:** [assets/iqoo-flow-presentation.pdf](assets/iqoo-flow-presentation.pdf) · [онлайн-версия](https://ivanfrolovskiy.github.io/iqoo-flow/deck/)
+**Видеоэкскурсия по сайту (1:25):** [media/iqoo-flow-tour.mp4](media/iqoo-flow-tour.mp4)
 
 ![iQOO Flow](media/slide-01-title.png)
 
@@ -54,7 +55,7 @@ src/phone3d.js              исходник 3D-модели
 assets/img/                 постеры модели, OG-картинка
 assets/fonts/               Inter, Unbounded, JetBrains Mono (SIL OFL 1.1)
 deck/                       презентация 16:9 (HTML), из неё собирается PDF
-media/                      слайды презентации в PNG
+media/                      слайды презентации в PNG и видеоэкскурсия
 tools/                      сборка 3D-модуля, рендер постеров и OG-картинки, сборка PDF
 ```
 
@@ -68,6 +69,7 @@ python3 -m http.server 8791            # из корня репозитория,
 python tools/render_posters.py         # постеры модели (Playwright + Google Chrome, сервер на :8791)
 python tools/render_og.py              # картинка для превью ссылки
 python tools/build_deck.py             # презентация: PDF и PNG-слайды
+python tools/record_tour.py            # видеоэкскурсия по сайту (нужен ffmpeg с libx264)
 ```
 
 Без WebGL сайт показывает заранее отрендеренные постеры модели; при `prefers-reduced-motion` анимации отключаются.

@@ -131,7 +131,11 @@ export function initDemo() {
     log.innerHTML = ''; stats(); render(true);
   });
   $('#demo-digest').addEventListener('click', showDigest);
-  onVisible(host, (v) => { s.visible = v; }, '0px');
+  let seeded = false; // при первом показе сразу три сообщения, чтобы демо не выглядело пустым
+  onVisible(host, (v) => {
+    s.visible = v;
+    if (v && !seeded) { seeded = true; [0, 350, 700].forEach(d => setTimeout(() => { if (s.running) tick(); }, d)); }
+  }, '0px');
 
   host.closest('.demo-phone').style.setProperty('--mode', MODES.life.color);
   phone.setMode('life');

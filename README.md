@@ -5,7 +5,7 @@
 
 - Сайт: https://ivanfrolovskiy.github.io/iqoo-flow/
 - Презентация: [PDF](assets/iqoo-flow-presentation.pdf), [онлайн-версия](https://ivanfrolovskiy.github.io/iqoo-flow/deck/)
-- Видео с прокруткой сайта (1:23): [media/iqoo-flow-tour.mp4](media/iqoo-flow-tour.mp4)
+- Видео с прокруткой сайта (1:22): [media/iqoo-flow-tour.mp4](media/iqoo-flow-tour.mp4)
 
 ![iQOO Flow](media/slide-01-title.png)
 

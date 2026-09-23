@@ -1,11 +1,13 @@
 """Постеры 3D-модели для запасного показа без WebGL, OG-картинки и презентации.
 
-Запуск (нужен локальный сервер из корня сайта на :8791 и Google Chrome):
+Запуск (нужен локальный сервер из корня сайта на :8791, Google Chrome, playwright и Pillow):
   python tools/render_posters.py
-Кадры снимаются со страницы tools/render.html с прозрачным фоном.
+Кадры снимаются со страницы tools/render.html с прозрачным фоном в двойном разрешении
+и уменьшаются вдвое: так тонкие детали вроде бороздок острова камер не дают муара.
 """
 import asyncio
 from pathlib import Path
+from PIL import Image
 from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,11 +27,14 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(channel='chrome', args=['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'])
         for name, pose, mode, w, h in SHOTS:
-            pg = await b.new_page(viewport={'width': w, 'height': h}, device_scale_factor=1)
+            pg = await b.new_page(viewport={'width': w, 'height': h}, device_scale_factor=2)
             await pg.goto(f'{BASE}?pose={pose}&mode={mode}&w={w}&h={h}')
             await pg.wait_for_function('window.__ready === true', timeout=30000)
             await pg.wait_for_timeout(300)
-            await pg.locator('#v').screenshot(path=str(OUT / f'{name}.png'), omit_background=True)
+            tmp = OUT / f'{name}.2x.png'
+            await pg.locator('#v').screenshot(path=str(tmp), omit_background=True)
+            Image.open(tmp).convert('RGBa').resize((w, h), Image.LANCZOS).convert('RGBA').save(OUT / f'{name}.png', optimize=True)
+            tmp.unlink()
             await pg.close()
             print('ok', name)
         await b.close()

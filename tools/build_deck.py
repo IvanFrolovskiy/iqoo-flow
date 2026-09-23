@@ -15,7 +15,8 @@ async def main():
     (ROOT / 'media').mkdir(exist_ok=True)
     async with async_playwright() as p:
         b = await p.chromium.launch(channel='chrome')
-        pg = await b.new_page(viewport={'width': 1920, 'height': 1080}, device_scale_factor=1)
+        # окно выше слайда: если слайд ровно в размер окна, нижняя полоса при съёмке элемента выпадает из кадра
+        pg = await b.new_page(viewport={'width': 1920, 'height': 1200}, device_scale_factor=1)
         await pg.goto(URL, wait_until='networkidle')
         await pg.wait_for_function('window.__ready === true', timeout=30000)
         await pg.wait_for_timeout(800)
